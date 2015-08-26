@@ -25,7 +25,7 @@ it will ask you if you have any item in your inventory that you dont want to sel
 
 When all this is done, you should see it selling all your items (except the ones that you dont want to sell).
 
-If any anything goes wrong just contact me here or on my email.
+If any anything goes wrong just contact me here or on my email, craked5@gmail.com
 
 If you enjoyed this program please consider donating some cheap skins or a lousy $ as i am a poor college student :)
 
