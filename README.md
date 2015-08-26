@@ -28,6 +28,7 @@ When all this is done, you should see it selling all your items (except the ones
 If any anything goes wrong just contact me here or on my email.
 
 If you enjoyed this program please consider donating some cheap skins or a lousy $ as i am a poor college student :)
+
 My Steam Trade -> https://steamcommunity.com/tradeoffer/new/?partner=18934038&token=YLpD8hHY
 
 Thanks :)
