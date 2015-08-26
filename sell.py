@@ -14,6 +14,8 @@ item_exceptions = []
 
 print 'HELLO DEAR FRIEND, THANK YOU FOR TRYING THIS SHITTY BOT EHEH NOW LETS BEGIN ASKING THE bIG QUESTIONS :D \n'
 
+inv_url = raw_input("Please paste your inventory url in here (like this "
+                    "http://steamcommunity.com/id/craked5/inventory): ")
 if raw_input('Do you want to add any item that you dont want to sell? (y/n)? \n') == 'y':
     while item_exceptions_status == False:
         item_exceptions.append(raw_input('Please type the item name (the format is '
@@ -40,14 +42,11 @@ def setPassword():
     password_json['username'] = username
 
     try:
-        password_json_file = open('util/password.json', 'w')
+        password_json_file = open('password.json', 'w')
         ujson.dump(password_json, password_json_file)
         password_json_file.close()
-    except IOError:
-        print "Error opening password.json file"
-        return False
-    except ValueError:
-        print "Error dumping data to password.json file"
+    except (IOError,ValueError, TypeError):
+        print "Error opening the cookies.json or the password.json file"
         return False
 
     print "Done, please restart the program or it wont work! \n"
@@ -68,13 +67,13 @@ def setCookies():
     cookies_json['steamRememberLogin'] = steamRememberLogin
 
     try:
-        cookies_json_file = open('util/cookies.json', 'w')
+        cookies_json_file = open('cookies.json', 'w')
         ujson.dump(cookies_json, cookies_json_file)
         cookies_json_file.close()
     except IOError:
         print "Error opening cookie.json file"
         return False
-    except ValueError:
+    except (ValueError,TypeError):
         print "Error dumping data to cookie.json file"
         return False
 #-----------------------------------------------------------------------------------------------------------------------
@@ -97,13 +96,11 @@ def getmedianprice(item):
             if isinstance(temp_median_price, basestring):
                 temp_median_price = temp_median_price.decode('unicode_escape').encode('ascii','ignore')
                 temp_median_price = temp_median_price.replace(',','.').replace('-','0')
-                temp_median_price = "{0:.2f}".format(float(temp_median_price))
-                list_median_prices[key] = float(temp_median_price)
+                temp_median_price = float(temp_median_price)
 
-        if list_median_prices.has_key(key):
-            print 'O preco medio de ' + key + ' e: ' + str(list_median_prices[key])
+        print 'O preco medio de ' + item + ' e: ' + str(temp_median_price)
 
-        return list_median_prices
+        return temp_median_price
 
 def getlowestprice(item):
         temp_item_priceover = http.querypriceoverview(item)
@@ -120,12 +117,12 @@ def getlowestprice(item):
             if isinstance(temp_lowest_price, basestring):
                 temp_lowest_price = temp_lowest_price.decode('unicode_escape').encode('ascii','ignore')
                 temp_lowest_price = temp_lowest_price.replace(',','.').replace('-','0')
-                temp_lowest_price = "{0:.2f}".format(float(temp_lowest_price))
+                temp_lowest_price = float(temp_lowest_price)
                 return temp_lowest_price
 
 
 try:
-    cookies_json_file = open('util/cookies.json', 'r')
+    cookies_json_file = open('cookies.json', 'r')
     cookies_json = ujson.load(cookies_json_file)
 
     wte = cookies_json.get('webTradeEligibility').encode('ascii','ignore')
@@ -135,17 +132,13 @@ try:
     sl = cookies_json.get('steamLogin').encode('ascii','ignore')
     srl= cookies_json.get('steamRememberLogin').encode('ascii','ignore')
     setup_cookies = True
-except IOError:
-    print 'NO COOKIES AND PASSWORD DETECTED \n'
-    print 'PLEASE PLEASE SET YOUR COOKIES BEFORE DOING ANYTHING, YOU CAN DO THAT BY ' \
-          'TYPING setcookies \n'
-except ValueError:
+except (IOError,ValueError):
     print 'NO COOKIES AND PASSWORD DETECTED \n'
     print 'PLEASE PLEASE SET YOUR COOKIES BEFORE DOING ANYTHING, YOU CAN DO THAT BY ' \
           'TYPING setcookies \n'
 
 try:
-    password_json_file = open('util/password.json', 'r')
+    password_json_file = open('password.json', 'r')
     password_json = ujson.load(password_json_file)
     password = password_json.get('password').encode('ascii','ignore')
     username = password_json.get('username').encode('ascii','ignore')
@@ -179,44 +172,48 @@ else:
         print "OK not now but to continue the program and actually sell something you have to :D"
         sys.exit()
 
-inv = http.getinv()
+inv = http.getinv(inv_url)
 
 for key in inv['rgInventory']:
     if inv['rgInventory'][key]['classid']+'_'+inv['rgInventory'][key]['instanceid'] in inv['rgDescriptions']:
-        temp = inv['rgInventory'][key]['classid']+'_'+inv['rgInventory'][key]['instanceid']
-        if inv['rgDescriptions'][temp]['market_hash_name'] in item_exceptions:
-            print "The item " + inv['rgDescriptions'][temp]['market_hash_name'] + \
+        inv_id = inv['rgInventory'][key]['classid']+'_'+inv['rgInventory'][key]['instanceid']
+        if inv['rgDescriptions'][inv_id]['market_hash_name'] in item_exceptions:
+            print "The item " + inv['rgDescriptions'][inv_id]['market_hash_name'] + \
                   " is on the exceptions list so it will not be sold!"
         else:
-            print "Preparing to sell the item " + inv['rgDescriptions'][temp]['market_hash_name'] + " \n"
-            median_price = getmedianprice(inv['rgDescriptions'][temp]['market_hash_name'])
-            lowest_price = getlowestprice(inv['rgDescriptions'][temp]['market_hash_name'])
-            if ((float(lowest_price)+(0.02*float(lowest_price)))/float(median_price)) >= 0.95:
-                price_sell = float(lowest_price)
-            else:
-                price_sell = float(median_price)
+            if inv['rgDescriptions'][inv_id]['marketable'] is 1:
+                print "Preparing to sell the item " + inv['rgDescriptions'][inv_id]['market_hash_name']
+                median_price = getmedianprice(inv['rgDescriptions'][inv_id]['market_hash_name'])
+                if median_price <= 0.06:
+                    price_sell_without_fee = 0.01
+                    price_sell = 0.03
+                else:
+                    lowest_price = getlowestprice(inv['rgDescriptions'][inv_id]['market_hash_name'])
+                    if ((float(lowest_price)+(0.02*float(lowest_price)))/float(median_price)) >= 0.95:
+                        price_sell = float(lowest_price)
+                        price_sell_without_fee = price_sell/1.15
+                    else:
+                        price_sell = float(median_price*0.95)
+                        price_sell_without_fee = price_sell/1.15
 
-            price_sell_without_fee = price_sell/1.15
+                sell_response = http.sellitem(inv['rgInventory'][key]['id'],float(price_sell_without_fee))
 
-            sell_response = http.sellitem(inv['rgInventory'][key]['id'],float(price_sell_without_fee))
+                if sell_response[0] is 200:
+                    print "Sold the item " + inv['rgDescriptions'][inv_id]['market_hash_name']
+                    print "The listed price for the item was " + str(price_sell) + \
+                          " and i will receive " + str(price_sell_without_fee) + '\n'
+                else:
+                    print "I couldn't sell the item " + inv['rgDescriptions'][inv_id]['market_hash_name'] + ' \n'
 
-            if sell_response[0] is 200:
-                print "Sold the item " + inv['rgDescriptions'][temp]['market_hash_name']
-                print "The listed price for the item was " + str(price_sell) + \
-                      " and i will receive " + str(price_sell_without_fee)
-            else:
-                print "I couldn't sell the item " + inv['rgDescriptions'][temp]['market_hash_name']
-
-print "The program is all done! Please check if everything went alright! If not, please use my contacts to send " \
-    "feedback!"
-print "If everything well alright please consider donating as i am a poor college student ahah \n" \
-      "My trade link -> https://steamcommunity.com/tradeoffer/new/?partner=18934038&token=YLpD8hHY"
+print "\nThe program is all done! Please check if everything went alright! If not, please use my contacts to send " \
+    "feedback! \n"
+print "If everything well alright please consider donating as i am a poor college student!"
+print "My trade link -> https://steamcommunity.com/tradeoffer/new/?partner=18934038&token=YLpD8hHY"
 print "Paypal -> craked5@gmail.com \n"
 print "For feedback use:"
 print "Github -> github.com/craked5"
 print "email -> craked5@gmail.com"
-print "twitch -> craked5"
-print "\n"
+print "twitch -> craked5 \n"
 print "Thanks for using this thing :D"
 
 

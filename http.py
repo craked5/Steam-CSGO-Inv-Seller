@@ -93,9 +93,9 @@ class SteamBotHttp:
             return False
 
 
-    def getinv(self):
+    def getinv(self,inv_url):
         try:
-            temp_inv = req.get('http://steamcommunity.com/id/craked5/inventory/json/730/2/')
+            temp_inv = req.get(inv_url+'/json/730/2/')
             array = json.loads(temp_inv.content)
 
             return array
