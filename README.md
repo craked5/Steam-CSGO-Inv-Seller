@@ -31,6 +31,6 @@ If you enjoyed this program please consider donating some cheap skins or a lousy
 
 My Steam Trade -> https://steamcommunity.com/tradeoffer/new/?partner=18934038&token=YLpD8hHY
 
+Since uni is starting if i have the time i will bundle all this in a exe for you non dev people to use :)
+
 Thanks :)
-
-
