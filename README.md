@@ -5,7 +5,9 @@ This is a simple tool to sell your CS:GO inventory on the Steam Market at the lo
 This program is written in Python and has the following external dependecies:
 
 Crypto - pip install pycrypto
+
 Requests - pip install requests
+
 Beautiful soup - pip install beautifulsoup4
 
 For this to work you have to retrieve your Steam Market cookies from your browser.
